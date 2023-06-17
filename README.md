@@ -55,4 +55,4 @@ modified, or distributed except according to those terms.
   [crates]: https://img.shields.io/crates/v/context_iterators
   [LICENSE]: LICENCE
   [msrv]: https://img.shields.io/badge/rust-1.70.0%2B-blue.svg?maxAge=3600
-  [RELEASES]: RELEASES.rst
+  [CHANGELOG]: CHANGELOG.md
