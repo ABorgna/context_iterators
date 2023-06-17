@@ -1,0 +1,20 @@
+[package]
+name = "context-iterators"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.70.0"
+
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/aborgna/context_iterators"
+documentation = "https://docs.rs/context_iterators/"
+authors = ["aborgna"]
+readme = "README.md"
+
+description = "Iterators adaptors with associated read-only data."
+keywords = ["iterator"]
+categories = ["algorithms", "rust-patterns"]
+
+[lib]
+name = "context_iterators"
+
+[dependencies]
