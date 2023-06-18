@@ -1,4 +1,4 @@
-context_iterators
+context-iterators
 =========
 
 [![build_status][]](https://github.com/aborgna/context_iterators/actions)
@@ -22,7 +22,7 @@ let iter: MappedIterator = (0..10)
 ```
 
 The `MappedIterator` type can be used in contexts where a concrete type is
-needed, for example as an associated type of a trait.
+needed, for example as an associated type for a trait.
 
 ```rust
 trait Iterable {

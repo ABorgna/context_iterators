@@ -18,7 +18,7 @@
 //! ```
 //!
 //! The `MappedIterator` type can be used in contexts where a concrete type is
-//! needed, for example as an associated type of a trait.
+//! needed, for example as an associated type for a trait.
 //!
 //! ```
 //! # use context_iterators::*;
