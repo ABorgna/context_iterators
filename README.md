@@ -2,7 +2,7 @@ context-iterators
 =========
 
 [![build_status][]](https://github.com/aborgna/context_iterators/actions)
-[![crates][]](https://crates.io/crates/context_iterators)
+[![crates][]](https://crates.io/crates/context-iterators)
 [![msrv][]](https://github.com/aborgna/context_iterators)
 
 Iterators adaptors with associated read-only data.
@@ -50,9 +50,9 @@ http://www.apache.org/licenses/LICENSE-2.0 or the MIT license
 http://opensource.org/licenses/MIT, at your option. This file may not be copied,
 modified, or distributed except according to those terms.
 
-  [API documentation here]: https://docs.rs/context_iterators/
-  [build_status]: https://github.com/aborgna/context_iterators/workflows/Continuous%20integration/badge.svg?branch=main
-  [crates]: https://img.shields.io/crates/v/context_iterators
+  [API documentation here]: https://docs.rs/context-iterators/
+  [build_status]: https://github.com/aborgna/context_iterators/workflows/Continuous%20integration/badge.svg?branch=master
+  [crates]: https://img.shields.io/crates/v/context-iterators
   [LICENSE]: LICENCE
   [msrv]: https://img.shields.io/badge/rust-1.70.0%2B-blue.svg?maxAge=3600
   [CHANGELOG]: CHANGELOG.md

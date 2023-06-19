@@ -6,7 +6,7 @@ rust-version = "1.70.0"
 
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/aborgna/context_iterators"
-documentation = "https://docs.rs/context_iterators/"
+documentation = "https://docs.rs/context-iterators/"
 authors = ["aborgna"]
 readme = "README.md"
 
