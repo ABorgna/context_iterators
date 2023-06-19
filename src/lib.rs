@@ -63,10 +63,20 @@ pub trait ContextIterator: Iterator {
     /// Get the context.
     fn context(&self) -> &Self::Context;
 
-    /// Apply a map to each element in the iterator.
-    fn map_with_context<F>(self, map: F) -> MapCtx<Self, F>
+    /// Get the context.
+    fn context_map<F, O>(self, map: F) -> CtxMap<Self, F>
     where
         Self: Sized,
+        F: Fn(&Self::Context) -> &O,
+    {
+        CtxMap { iter: self, map }
+    }
+
+    /// Apply a map to each element in the iterator.
+    fn map_with_context<F, O>(self, map: F) -> MapCtx<Self, F>
+    where
+        Self: Sized,
+        F: FnMut(Self::Item, &Self::Context) -> O,
     {
         MapCtx { iter: self, map }
     }
@@ -75,8 +85,21 @@ pub trait ContextIterator: Iterator {
     fn filter_with_context<F>(self, filter: F) -> FilterCtx<Self, F>
     where
         Self: Sized,
+        F: FnMut(&Self::Item, &Self::Context) -> bool,
     {
         FilterCtx {
+            iter: self,
+            predicate: filter,
+        }
+    }
+
+    /// Apply a filter over the elements of the iterator
+    fn filter_map_with_context<F, O>(self, filter: F) -> FilterMapCtx<Self, F>
+    where
+        Self: Sized,
+        F: FnMut(Self::Item, &Self::Context) -> Option<O>,
+    {
+        FilterMapCtx {
             iter: self,
             predicate: filter,
         }
@@ -139,6 +162,64 @@ where
 }
 
 impl<I, Ctx> FusedIterator for WithCtx<I, Ctx> where I: FusedIterator {}
+
+/// Apply a function to the context of an iterator.
+#[derive(Clone, Debug)]
+pub struct CtxMap<I, F> {
+    pub(self) iter: I,
+    pub(self) map: F,
+}
+
+impl<I, F> Iterator for CtxMap<I, F>
+where
+    I: Iterator,
+{
+    type Item = I::Item;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter.next()
+    }
+
+    fn count(self) -> usize {
+        self.iter.count()
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.iter.size_hint()
+    }
+}
+
+impl<I, F, O> ContextIterator for CtxMap<I, F>
+where
+    I: ContextIterator,
+    F: Fn(&I::Context) -> &O,
+{
+    type Context = O;
+
+    fn context(&self) -> &O {
+        (self.map)(self.iter.context())
+    }
+}
+
+impl<I, F> DoubleEndedIterator for CtxMap<I, F>
+where
+    I: DoubleEndedIterator,
+{
+    fn next_back(&mut self) -> Option<Self::Item> {
+        self.iter.next_back()
+    }
+}
+
+impl<I, F> ExactSizeIterator for CtxMap<I, F>
+where
+    I: ExactSizeIterator,
+{
+    fn len(&self) -> usize {
+        self.iter.len()
+    }
+}
+
+impl<I, Ctx> FusedIterator for CtxMap<I, Ctx> where I: FusedIterator {}
 
 /// Map a function over each element in the iterator.
 #[derive(Clone, Debug)]
@@ -206,7 +287,7 @@ where
     }
 }
 
-/// Map a function over an iterator, filtering
+/// Filter the elements of an iterator.
 #[derive(Clone, Debug)]
 pub struct FilterCtx<I, F> {
     pub(self) iter: I,
@@ -283,6 +364,83 @@ where
     }
 }
 
+/// Map a function over an iterator, simultaneously filtering elements.
+#[derive(Clone, Debug)]
+pub struct FilterMapCtx<I, F> {
+    pub(self) iter: I,
+    pub(self) predicate: F,
+}
+
+impl<I, F, O> Iterator for FilterMapCtx<I, F>
+where
+    I: ContextIterator,
+    F: FnMut(I::Item, &I::Context) -> Option<O>,
+{
+    type Item = O;
+
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> {
+        // Explicit loop to avoid the mutable self.iter borrow while accessing
+        // the context.
+        loop {
+            let item = self.iter.next()?;
+            if let Some(elem) = (self.predicate)(item, self.iter.context()) {
+                return Some(elem);
+            }
+        }
+    }
+
+    #[inline]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        (0, self.iter.size_hint().1)
+    }
+
+    #[inline]
+    fn count(mut self) -> usize {
+        let mut sum = 0;
+        while let Some(item) = self.iter.next() {
+            sum += (self.predicate)(item, self.iter.context()).is_some() as usize;
+        }
+        sum
+    }
+}
+
+impl<I, F, O> DoubleEndedIterator for FilterMapCtx<I, F>
+where
+    I: DoubleEndedIterator + ContextIterator,
+    F: FnMut(I::Item, &I::Context) -> Option<O>,
+{
+    #[inline]
+    fn next_back(&mut self) -> Option<Self::Item> {
+        loop {
+            let item = self.iter.next_back()?;
+            if let Some(elem) = (self.predicate)(item, self.iter.context()) {
+                return Some(elem);
+            }
+        }
+    }
+}
+
+impl<I, F, O> FusedIterator for FilterMapCtx<I, F>
+where
+    I: FusedIterator + ContextIterator,
+    F: FnMut(I::Item, &I::Context) -> Option<O>,
+{
+}
+
+impl<I, F, O> ContextIterator for FilterMapCtx<I, F>
+where
+    I: ContextIterator,
+    F: FnMut(I::Item, &I::Context) -> Option<O>,
+{
+    type Context = I::Context;
+
+    #[inline]
+    fn context(&self) -> &Self::Context {
+        self.iter.context()
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -310,5 +468,16 @@ mod test {
         assert_eq!(iter.context(), &42);
         assert_eq!(iter.clone().count(), 2);
         assert!(iter.eq(8..10));
+    }
+
+    #[test]
+    fn filter_map() {
+        let iter = (0..10)
+            .with_context(42)
+            .map_with_context(|item: usize, context: &usize| item + *context);
+
+        assert_eq!(iter.context(), &42);
+        assert_eq!(iter.len(), 10);
+        assert!(iter.eq(42..52));
     }
 }
