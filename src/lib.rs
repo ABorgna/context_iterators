@@ -220,7 +220,14 @@ where
 
 impl<I, Ctx> FusedIterator for CtxMap<I, Ctx> where I: FusedIterator {}
 
+/// Map a function over each element in an iterator, passing a context to each
+/// function call.
+pub type MapWithCtx<I, Ctx, O> = MapCtx<WithCtx<I, Ctx>, O>;
+
 /// Map a function over each element in the iterator.
+///
+/// Each function call is passed the context of the iterator along with the
+/// element.
 #[derive(Clone, Debug)]
 pub struct MapCtx<I, O>
 where
@@ -280,7 +287,14 @@ where
     }
 }
 
+/// Filter the elements of an iterator, passing a context to each
+/// function call.
+pub type FilterWithCtx<I, Ctx> = FilterCtx<WithCtx<I, Ctx>>;
+
 /// Filter the elements of an iterator.
+///
+/// Each function call is passed the context of the iterator along with the
+/// element.
 #[derive(Clone, Debug)]
 pub struct FilterCtx<I>
 where
@@ -352,7 +366,14 @@ where
     }
 }
 
-/// Map a function over an iterator, simultaneously filtering elements.
+/// Map a function over the elements of an iterator, simultaneously filtering elements.
+/// Passes a context to each function call.
+pub type FilterMapWithCtx<I, Ctx, O> = FilterMapCtx<WithCtx<I, Ctx>, O>;
+
+/// Map a function over the elements of an iterator, simultaneously filtering elements.
+///
+/// Each function call is passed the context of the iterator along with the
+/// element.
 #[derive(Clone, Debug)]
 pub struct FilterMapCtx<I, O>
 where
