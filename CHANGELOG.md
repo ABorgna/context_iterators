@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.1.0 (2023-06-21)
+
+### Added
+
+- Aliases for adaptors applied directly over a `WithCtx<I, Ctx>`.
+
+### Changed
+
+- Dropped generic functions in favour of function pointers.
+
 ## v0.1.1 (2023-06-19)
 
 ### Added
