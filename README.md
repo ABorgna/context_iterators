@@ -12,13 +12,15 @@ non-capturing closures.
 
 ```rust
 use context_iterators::*;
+use std::ops::Range;
 
-type Closure = fn(usize, &usize) -> usize;
-type MappedIterator = MapCtx<WithCtx<std::ops::Range<usize>, usize>, Closure>;
+type MappedIterator = MapCtx<WithCtx<Range<u16>, u16>, usize>;
 
 let iter: MappedIterator = (0..10)
     .with_context(42)
-    .map_with_context(|item: usize, context: &usize| item + *context);
+    .map_with_context(|item: u16, context: &u16| (item + *context) as usize);
+
+assert!(iter.eq(42..52));
 ```
 
 The `MappedIterator` type can be used in contexts where a concrete type is
